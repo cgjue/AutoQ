@@ -1,0 +1,26 @@
+name: juegame
+version: 1
+
+headers:
+-url: /qsmy
+
+
+cron:
+- url: /hunt_jue1
+  schedule: "*/60 * * * *"
+  
+- url: /tower_jue1
+  schedule: "*/30 * * * *"
+  
+- url: /hunt_jue2
+  schedule: "*/60 * * * *"
+  
+- url: /tower_jue2
+  schedule: "*/30 * * * *"
+  
+- url: /explore_jue1
+  schedule: "*/75 * * * *"
+  
+- url: /explore_jue2
+  schedule: "*/75 * * * *"
+  
