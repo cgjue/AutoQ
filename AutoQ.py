@@ -18,7 +18,7 @@ class AutoQ(object):
             page = opener.open(url).read()
             return page             
         except urllib2.URLError, e:
-            print e.code,e.reason
+            print e
                     
 
     def explore(self):
@@ -50,7 +50,7 @@ class AutoQ(object):
          while 1:
              try:
                  page=self.getPage(st)
-                 data=json.loads(page[page.find('{'):])
+                 data=json.loads(page[page.find('{"code"'):])
                  print data
                  if data['data']['tower']['buffstr']!='':
                          res=data['data']['tower']['buffstr']
@@ -82,6 +82,7 @@ class AutoQ(object):
         #return
         login='http://s9030.mobile01.qins.com/interface.php?s=Activity&m=getLoginAward&a={}&v=4.0&fv=4.0.1' 
         page = self.getPage(login)
+        #print page
         data = json.loads(page)
         if not data['data']:
                 return
@@ -89,25 +90,27 @@ class AutoQ(object):
         #初始化我方数据
         st = 'http://s9030.mobile01.qins.com/interface.php?s=System&m=init&a={}&v=4.0&fv=4.0.1'
         page = self.getPage(st)
-        data = json.loads(page[page.find('{'):])
-        print data
+        data = json.loads(page[page.find('{"code"'):])
+        #print data
         mylv=data['data']['user']['lv']
         warriors = data['data']['warriors']
         warriors = sorted(warriors, key=lambda warriors:warriors['lv'], reverse=True)
-        print warriors
-        while 1:
+        #print warriors
+        ok=1
+        while ok:
             st="http://s9030.mobile01.qins.com/interface.php?s=Hunt&m=get&a={}&v=4.0&fv=4.0.1"
             page=self.getPage(st)
-            data=json.loads(page[page.find('{'):])
+            data=json.loads(page[page.find('{"code"'):])
             if data['data']['hunt']['power']==0:
                 print '体力不足'
+                ok=0
                 break
             num=random.randint(0, len(warriors)%22)#最多22个
-            while 1:#持续刷新
+            while ok:#持续刷新
                 st='http://s9030.mobile01.qins.com/interface.php?s=Hunt&m=targets&a={"wid":'+str(warriors[num]['wid'])+"}&v=4.0&fv=4.0.1"
                 print st
                 page = self.getPage(st)
-                data = json.loads(page[page.find('{'):])
+                data = json.loads(page[page.find('{"code"'):])
                 print '获取猎物',data
                 if data['data']:
                     ct=0
@@ -116,21 +119,29 @@ class AutoQ(object):
                             break
                         ct=ct+1
                     if ct<3:
+                        err=0
                         while 1:
                             st='http://s9030.mobile01.qins.com/interface.php?s=Hunt&m=attack&a={"isNpc":'+str(data['data']['huntTargets'][ct]['isNpc'])+',"tid":'+str(data['data']['huntTargets'][ct]['uid'])+',"wid":'+str(warriors[num]['wid'])+'}&v=4.0&fv=4.0.1'
                             page=self.getPage(st)
                             print '检查猎物是否获取1',page[page.find('{"code"'):]
                             data2=json.loads(page[page.find('{"code"'):])
-                            print '检查猎物是否获取',data2
-                            if not data2['data']:
-                                break#战斗失败或者已达到当天猎取最多数
-                            if data2['data']['huntRes']==1:
-                                break#猎取成果
+                            huntRes=1
+                            try:
+                                huntRes=data2['data']['huntRes']
+                            except Exception,e:
+                                print e
+                                err+=1
+                                huntRes=0
+                                if err>5:
+                                    ok=0
+                                    print '出错次数太多'
+                                    break
                             st="http://s9030.mobile01.qins.com/interface.php?s=Hunt&m=get&a={}&v=4.0&fv=4.0.1"
                             page=self.getPage(st)
-                            data2=json.loads(page[page.find('{'):])
+                            data2=json.loads(page[page.find('{"code"'):])
                             print '查看体力剩余量',data2
                             if data2['data']['hunt']['power']==0:
+                                ok=0
                                 print '体力不足'
                                 break
                 else:#已达到当天猎取最多数
